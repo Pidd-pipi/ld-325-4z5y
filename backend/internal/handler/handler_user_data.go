@@ -40,23 +40,6 @@ func (h *UserDataHandler) ListFavorites(c *gin.Context) {
 	}
 	success(c, rows)
 }
-func (h *UserDataHandler) CreateAlert(c *gin.Context) {
-	var req dto.CreateAlertRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(err)
-		return
-	}
-	if err := h.validate.Struct(req); err != nil {
-		c.Error(err)
-		return
-	}
-	row, err := h.service.Alert(c.GetString("user_id"), req)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-	success(c, row)
-}
 func (h *UserDataHandler) CreateBudget(c *gin.Context) {
 	var req dto.BudgetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

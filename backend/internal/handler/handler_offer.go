@@ -54,3 +54,23 @@ func (h *OfferHandler) UpdateStatus(c *gin.Context) {
 	}
 	success(c, data)
 }
+
+// Submit is the supplier price-change entry point that drives alert
+// evaluation for the submitted offer version.
+func (h *OfferHandler) Submit(c *gin.Context) {
+	var req dto.SubmitOfferRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(err)
+		return
+	}
+	if err := h.validate.Struct(req); err != nil {
+		c.Error(err)
+		return
+	}
+	offer, events, err := h.service.Submit(req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	success(c, gin.H{"offer": offer, "triggered": len(events)})
+}

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 筑价建材比价 API
-  version: 1.0.0
+  version: 1.1.0
 paths:
   /healthz:
     get:
@@ -14,10 +14,49 @@ paths:
     post:
       summary: 批量比较建材
       responses: {'200': {description: 成功}}
+  /api/v1/products/{id}/offers:
+    get:
+      summary: 查看商品的全部商家报价
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: integer}}
+      responses: {'200': {description: 成功}}
+  /api/v1/products/{id}/trend:
+    get:
+      summary: 查看价格趋势
+      responses: {'200': {description: 成功}}
+  /api/v1/suppliers:
+    get: {summary: 获取供应商列表}
+  /api/v1/admin/suppliers/{id}/status:
+    patch:
+      summary: 管理员审核供应商
+      responses: {'200': {description: 成功}}
+  /api/v1/supplier/offers:
+    post:
+      summary: 供应商提交新报价（同一报价版本重复提交幂等，只触发一次预警）
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  triggered: {type: integer, description: 本次触发的预警数量}
+  /api/v1/supplier/offers/{id}/status:
+    patch:
+      summary: 供应商更新报价库存状态
+      responses: {'200': {description: 成功}}
   /api/v1/favorites:
     get: {summary: 获取收藏}
     post: {summary: 添加收藏}
   /api/v1/alerts:
-    post: {summary: 创建价格预警}
+    get:
+      summary: 个人中心-价格预警（进行中/已触发，含原价、现价、降幅、触发时间、当前可采购状态）
+      responses: {'200': {description: 成功}}
+    post:
+      summary: 创建价格预警（以当前最低有效报价为基线）
+      responses:
+        '200': {description: 成功}
+        '400': {description: 该商品暂时没有有效报价，暂不可比较}
   /api/v1/budgets:
     post: {summary: 保存装修预算}

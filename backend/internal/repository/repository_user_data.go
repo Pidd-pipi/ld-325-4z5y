@@ -9,7 +9,6 @@ import (
 type UserDataRepository interface {
 	CreateFavorite(model.Favorite) (model.Favorite, error)
 	ListFavorites(string) ([]model.Favorite, error)
-	CreateAlert(model.PriceAlert) (model.PriceAlert, error)
 	CreateBudget(model.Budget) (model.Budget, error)
 }
 type userDataRepository struct{ db *gorm.DB }
@@ -27,12 +26,6 @@ func (r *userDataRepository) ListFavorites(user string) ([]model.Favorite, error
 		return nil, fmt.Errorf("list favorites: %w", err)
 	}
 	return values, nil
-}
-func (r *userDataRepository) CreateAlert(value model.PriceAlert) (model.PriceAlert, error) {
-	if err := r.db.Create(&value).Error; err != nil {
-		return value, fmt.Errorf("create alert: %w", err)
-	}
-	return value, nil
 }
 func (r *userDataRepository) CreateBudget(value model.Budget) (model.Budget, error) {
 	if err := r.db.Create(&value).Error; err != nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/blueship581/cybuildprice/backend/internal/constants"
 	"github.com/blueship581/cybuildprice/backend/internal/dto"
@@ -28,6 +29,14 @@ func ErrorHandler() gin.HandlerFunc {
 			code, status, message = constants.ErrorNotFound, http.StatusNotFound, "resource not found"
 		} else if isClientError(err) || last.Type == gin.ErrorTypeBind {
 			code, status, message = constants.ErrorValidation, http.StatusBadRequest, "validation failed"
+			// Business validation errors carry an actionable, user-facing
+			// reason (e.g. "该商品暂时没有有效报价") worth forwarding.
+			var business *apperrors.BusinessError
+			if errors.As(err, &business) && business.Message != "" {
+				message = business.Message
+			} else if text := strings.TrimPrefix(err.Error(), apperrors.ErrInvalidInput.Error()+":"); text != err.Error() {
+				message = strings.TrimSpace(text)
+			}
 		}
 		c.JSON(status, dto.Response{Code: code, Message: message})
 	}

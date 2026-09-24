@@ -8,6 +8,7 @@ import (
 
 type SupplierRepository interface {
 	List() ([]model.Supplier, error)
+	Get(uint) (model.Supplier, error)
 	UpdateStatus(uint, string) (model.Supplier, error)
 }
 type supplierRepository struct{ db *gorm.DB }
@@ -19,6 +20,13 @@ func (r *supplierRepository) List() ([]model.Supplier, error) {
 		return nil, fmt.Errorf("list suppliers: %w", err)
 	}
 	return rows, nil
+}
+func (r *supplierRepository) Get(id uint) (model.Supplier, error) {
+	var row model.Supplier
+	if err := r.db.First(&row, id).Error; err != nil {
+		return row, fmt.Errorf("get supplier: %w", err)
+	}
+	return row, nil
 }
 func (r *supplierRepository) UpdateStatus(id uint, status string) (model.Supplier, error) {
 	var row model.Supplier

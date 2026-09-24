@@ -4,3 +4,17 @@ export type Product = { ID: number; Name: string; Brand: string; Model: string; 
 export type ApiEnvelope<T> = { code: number; message: string; data: T };
 export type TrendPoint = { Price: number; RecordedAt: string };
 export type Trend = { range: string; highest: number; lowest: number; average: number; points: TrendPoint[] };
+export type PriceAlert = {
+  id: number;
+  product_id: number;
+  product: { id: number; name: string; unit: string };
+  status: 'active' | 'triggered';
+  baseline_price: number;
+  current_price: number;
+  drop_percent: number;
+  target_price: number;
+  comparable: boolean;
+  purchasable: boolean;
+  triggered_at?: string;
+  supplier?: string;
+};
