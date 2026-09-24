@@ -13,6 +13,7 @@ type ProductRepository interface {
 	List(string, string, string, int, int) ([]model.Product, int64, error)
 	Get(uint) (model.Product, error)
 	Compare([]uint) ([]model.Product, error)
+	Exists(id uint) (bool, error)
 }
 type productRepository struct{ db *gorm.DB }
 
@@ -65,4 +66,11 @@ func (r *productRepository) Compare(ids []uint) ([]model.Product, error) {
 		return nil, fmt.Errorf("compare products: %w", err)
 	}
 	return p, nil
+}
+func (r *productRepository) Exists(id uint) (bool, error) {
+	var count int64
+	if err := r.db.Model(&model.Product{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return false, fmt.Errorf("check product exists: %w", err)
+	}
+	return count > 0, nil
 }

@@ -16,3 +16,9 @@ type BusinessError struct {
 
 func (e *BusinessError) Error() string { return e.Message }
 func (e *BusinessError) Unwrap() error { return e.Err }
+
+// NewValidation builds a client-facing validation error carrying a readable
+// message while remaining discoverable via errors.Is(err, ErrInvalidInput).
+func NewValidation(message string) *BusinessError {
+	return &BusinessError{Message: message, Err: ErrInvalidInput}
+}

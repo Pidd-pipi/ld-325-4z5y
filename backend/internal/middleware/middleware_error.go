@@ -26,6 +26,13 @@ func ErrorHandler() gin.HandlerFunc {
 			code, status, message = constants.ErrorUnauthorized, http.StatusUnauthorized, "unauthorized"
 		} else if errors.Is(err, apperrors.ErrNotFound) {
 			code, status, message = constants.ErrorNotFound, http.StatusNotFound, "resource not found"
+		} else if errors.Is(err, apperrors.ErrInvalidInput) {
+			code, status = constants.ErrorValidation, http.StatusBadRequest
+			message = "validation failed"
+			var business *apperrors.BusinessError
+			if errors.As(err, &business) && business.Message != "" {
+				message = business.Message
+			}
 		} else if isClientError(err) || last.Type == gin.ErrorTypeBind {
 			code, status, message = constants.ErrorValidation, http.StatusBadRequest, "validation failed"
 		}

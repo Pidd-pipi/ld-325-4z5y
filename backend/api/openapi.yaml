@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 筑价建材比价 API
-  version: 1.0.0
+  version: 1.1.0
 paths:
   /healthz:
     get:
@@ -14,10 +14,94 @@ paths:
     post:
       summary: 批量比较建材
       responses: {'200': {description: 成功}}
+  /api/v1/products/{id}/offers:
+    get:
+      summary: 某建材的全部商家报价
+      parameters:
+        - {in: path, name: id, required: true, schema: {type: integer}}
+      responses: {'200': {description: 成功}}
+  /api/v1/products/{id}/trend:
+    get:
+      summary: 价格趋势（30d/90d/1y）
+      parameters:
+        - {in: path, name: id, required: true, schema: {type: integer}}
+        - {in: query, name: range, schema: {type: string, enum: [30d, 90d, 1y]}}
+      responses: {'200': {description: 成功}}
+  /api/v1/suppliers:
+    get:
+      summary: 查询供应商
+      responses: {'200': {description: 成功}}
+  /api/v1/admin/suppliers/{id}/status:
+    patch:
+      summary: 管理员审核供应商
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: 成功}, '401': {description: 无权限}}
+  /api/v1/supplier/offers:
+    post:
+      summary: 供应商提交新报价版本；已审核店铺、有货、达到订阅降幅且不高于目标价时触发预警，同一报价版本只触发一次
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, supplier_id, unit_price, moq, freight, delivery_days, stock_status]
+              properties:
+                product_id: {type: integer}
+                supplier_id: {type: integer}
+                unit_price: {type: number, minimum: 0.01}
+                moq: {type: integer, minimum: 1}
+                freight: {type: string}
+                delivery_days: {type: integer, minimum: 1, maximum: 90}
+                stock_status: {type: string, enum: [in_stock, out_of_stock, discontinued]}
+      responses:
+        '200':
+          description: 提交结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_version: {type: boolean, description: 是否生成了新报价版本}
+                  triggered_count: {type: integer, description: 本次触发的订阅数}
+        '400': {description: 店铺未审核 / 校验失败}
+        '401': {description: 需要供应商身份}
+  /api/v1/supplier/offers/{id}/status:
+    patch:
+      summary: 更新报价库存状态（有货/缺货/停产）
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: 成功}}
   /api/v1/favorites:
     get: {summary: 获取收藏}
     post: {summary: 添加收藏}
   /api/v1/alerts:
-    post: {summary: 创建价格预警}
+    get:
+      summary: 个人中心：按 active（进行中）/ triggered（已触发）分组返回订阅，含原价、现价、降幅、触发时间与当前可采购状态
+      responses: {'200': {description: 成功}}
+    post:
+      summary: 创建价格预警；订阅时保存当前最低有效报价（已审核店铺+有货）为基线，无有效报价时返回校验错误
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, target_price, drop_percent]
+              properties:
+                product_id: {type: integer}
+                target_price: {type: number, minimum: 0.01}
+                drop_percent: {type: number, minimum: 0, maximum: 100}
+      responses: {'200': {description: 成功}, '400': {description: 暂无可比较的有效报价}}
   /api/v1/budgets:
     post: {summary: 保存装修预算}
+  /api/v1/demo/supplier-token:
+    get:
+      summary: 演示用：获取供应商角色短期 JWT，便于在浏览器中演练改价触发流程
+      responses: {'200': {description: 成功}}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

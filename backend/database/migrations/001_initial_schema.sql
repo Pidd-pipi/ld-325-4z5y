@@ -1,2 +1,8 @@
 -- GORM AutoMigrate creates the initial schema at startup. This file documents the managed migration boundary.
--- Tables: categories, products, suppliers, offers, price_histories, favorites, price_alerts, budgets.
+-- Tables: categories, products, suppliers, offers, price_histories, favorites, price_alerts, alert_events, budgets.
+--
+-- Price-alert lifecycle:
+--   price_alerts.baseline_price      snapshots the lowest approved + in-stock offer at subscription time.
+--   price_alerts.status              active | triggered.
+--   price_alerts.triggered_at        set when a new quote meets drop-percent and target-price conditions.
+--   alert_events(alert_id, offer_id) unique pair: re-submitting the same offer version creates at most one event.

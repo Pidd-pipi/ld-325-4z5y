@@ -1,6 +1,8 @@
 package router
 
 import (
+	"log/slog"
+
 	"github.com/blueship581/cybuildprice/backend/internal/constants"
 	"github.com/blueship581/cybuildprice/backend/internal/handler"
 	"github.com/blueship581/cybuildprice/backend/internal/middleware"
@@ -9,16 +11,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
-	"log/slog"
 )
 
 func New(db *gorm.DB, logger *slog.Logger, jwtSecret string) *gin.Engine {
 	v := validator.New()
 	product := handler.NewProductHandler(service.NewProductService(repository.NewProductRepository(db), logger), v)
-	offers := handler.NewOfferHandler(service.NewOfferService(repository.NewOfferRepository(db)), v)
+	offerRepo := repository.NewOfferRepository(db)
+	offers := handler.NewOfferHandler(
+		service.NewOfferService(offerRepo),
+		service.NewOfferSubmissionService(db, offerRepo, repository.NewSupplierRepository(db), repository.NewProductRepository(db), repository.NewAlertRepository(db), repository.NewPriceHistoryRepository(db)),
+		v,
+	)
 	trend := handler.NewTrendHandler(service.NewPriceHistoryService(repository.NewPriceHistoryRepository(db)))
 	user := handler.NewUserDataHandler(service.NewUserDataService(repository.NewUserDataRepository(db)), v)
+	alerts := handler.NewAlertHandler(service.NewAlertService(db, repository.NewAlertRepository(db), offerRepo), v)
 	supplier := handler.NewSupplierHandler(service.NewSupplierService(repository.NewSupplierRepository(db)), v)
+	demoAuth := handler.NewDemoAuthHandler(jwtSecret)
 	r := gin.New()
 	r.Use(gin.Recovery(), middleware.RequestID(), middleware.RequestLogger(logger), middleware.ErrorHandler(), middleware.JWTOrDemoAuth(jwtSecret))
 	r.GET(constants.HealthPath, func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
@@ -30,10 +38,13 @@ func New(db *gorm.DB, logger *slog.Logger, jwtSecret string) *gin.Engine {
 	api.GET("/products/:id/trend", trend.Get)
 	api.GET("/suppliers", supplier.List)
 	api.PATCH("/admin/suppliers/:id/status", middleware.RequireRole(constants.RoleAdmin), supplier.UpdateStatus)
+	api.POST("/supplier/offers", middleware.RequireRole(constants.RoleSupplier, constants.RoleAdmin), offers.Submit)
 	api.PATCH("/supplier/offers/:id/status", middleware.RequireRole(constants.RoleSupplier, constants.RoleAdmin), offers.UpdateStatus)
 	api.GET("/favorites", user.ListFavorites)
 	api.POST("/favorites", user.CreateFavorite)
-	api.POST("/alerts", user.CreateAlert)
+	api.GET("/alerts", alerts.List)
+	api.POST("/alerts", alerts.Create)
 	api.POST("/budgets", user.CreateBudget)
+	api.GET("/demo/supplier-token", demoAuth.SupplierToken)
 	return r
 }

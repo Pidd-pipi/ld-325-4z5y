@@ -2,6 +2,8 @@ package repository
 
 import (
 	"fmt"
+
+	apperrors "github.com/blueship581/cybuildprice/backend/internal/errors"
 	"github.com/blueship581/cybuildprice/backend/internal/model"
 	"gorm.io/gorm"
 )
@@ -9,6 +11,7 @@ import (
 type SupplierRepository interface {
 	List() ([]model.Supplier, error)
 	UpdateStatus(uint, string) (model.Supplier, error)
+	Get(id uint) (model.Supplier, error)
 }
 type supplierRepository struct{ db *gorm.DB }
 
@@ -28,6 +31,16 @@ func (r *supplierRepository) UpdateStatus(id uint, status string) (model.Supplie
 	row.Status = status
 	if err := r.db.Save(&row).Error; err != nil {
 		return row, fmt.Errorf("update supplier: %w", err)
+	}
+	return row, nil
+}
+func (r *supplierRepository) Get(id uint) (model.Supplier, error) {
+	var row model.Supplier
+	if err := r.db.First(&row, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return row, apperrors.ErrNotFound
+		}
+		return row, fmt.Errorf("get supplier: %w", err)
 	}
 	return row, nil
 }

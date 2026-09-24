@@ -2,13 +2,15 @@ package repository
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/blueship581/cybuildprice/backend/internal/model"
 	"gorm.io/gorm"
-	"time"
 )
 
 type PriceHistoryRepository interface {
 	List(uint, time.Time) ([]model.PriceHistory, error)
+	Create(tx *gorm.DB, value *model.PriceHistory) error
 }
 type priceHistoryRepository struct{ db *gorm.DB }
 
@@ -21,4 +23,10 @@ func (r *priceHistoryRepository) List(productID uint, since time.Time) ([]model.
 		return nil, fmt.Errorf("list history: %w", err)
 	}
 	return rows, nil
+}
+func (r *priceHistoryRepository) Create(tx *gorm.DB, value *model.PriceHistory) error {
+	if err := tx.Create(value).Error; err != nil {
+		return fmt.Errorf("create history: %w", err)
+	}
+	return nil
 }

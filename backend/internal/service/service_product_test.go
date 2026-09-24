@@ -15,6 +15,7 @@ func (mockProductRepo) List(string, string, string, int, int) ([]model.Product, 
 }
 func (mockProductRepo) Get(uint) (model.Product, error)         { return model.Product{}, nil }
 func (mockProductRepo) Compare([]uint) ([]model.Product, error) { return nil, nil }
+func (mockProductRepo) Exists(uint) (bool, error)               { return true, nil }
 func TestProductServiceDefaultsPagination(t *testing.T) {
 	svc := NewProductService(mockProductRepo{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	rows, total, page, pageSize, err := svc.List(dto.ProductQuery{})

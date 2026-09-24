@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/blueship581/cybuildprice/backend/internal/model"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"testing"
 )
